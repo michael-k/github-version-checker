@@ -6,6 +6,7 @@ services:
 install:
   - sudo apt-get update
   - sudo apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" docker-ce
+  - go get -t -v ./...
   - go get -u github.com/alecthomas/gometalinter
   - gometalinter --install
 
