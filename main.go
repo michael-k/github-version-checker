@@ -24,7 +24,6 @@ type node struct {
 var q struct {
 	Repository struct {
 		Releases struct {
-			TotalCount githubv4.Int
 			Nodes      []node
 		} `graphql:"releases(last: 100)"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
