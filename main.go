@@ -21,11 +21,20 @@ type node struct {
 	}
 }
 
+type edge struct {
+	Tag struct {
+		Name string // githubv4.String
+	} `graphql:"tag:node"`
+}
+
 var q struct {
 	Repository struct {
 		Releases struct {
-			Nodes      []node
+			Nodes []node
 		} `graphql:"releases(last: 100)"`
+		Tags struct {
+			Edges []edge
+		} `graphql:"tags:refs(refPrefix:\"refs/tags/\", last:100)"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
 }
 
@@ -54,12 +63,24 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	for _, release := range q.Repository.Releases.Nodes {
-		if release.IsDraft || release.IsPrerelease {
-			continue
+	if len(q.Repository.Releases.Nodes) > 0 {
+		// use releases if they exist
+		// example: roundcube roundcubemail 1.3.6
+		for _, release := range q.Repository.Releases.Nodes {
+			if release.IsDraft || release.IsPrerelease {
+				continue
+			}
+			if version.Compare(release.Tag.Name, versionInUse, ">") {
+				fmt.Println("Found newer version:", release.Tag.Name)
+			}
 		}
-		if version.Compare(release.Tag.Name, versionInUse, ">") {
-			fmt.Println("Found newer version:", release.Tag.Name)
+	} else {
+		// fall back to tags if no releases exist
+		// example: pytest-dev pytest 3.9.0
+		for _, tagEdge := range q.Repository.Tags.Edges {
+			if version.Compare(tagEdge.Tag.Name, versionInUse, ">") {
+				fmt.Println("Found newer version:", tagEdge.Tag.Name)
+			}
 		}
 	}
 }
